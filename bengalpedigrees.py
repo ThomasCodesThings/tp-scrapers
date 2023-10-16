@@ -13,11 +13,11 @@ DELAY_MAX = 10
 def isInvalidLink(id):
     url = f"https://bengalpedigrees.com/viewcat.php?catid={id}"
     r = requests.get(url)
+    print(f"Checking id: {id} -> {'OK' if r.status_code == 200 else 'Error'} ...")
     if(r.status_code >= 300):
         print(f"Failed to fetch {url}: {r.status_code}")
         return True
     soup = BeautifulSoup(r.text, 'html.parser')
-    table = soup.find_all('table', recursive=True)[-1]
     return isInvalid(soup)
 
 def isInvalid(soup):
