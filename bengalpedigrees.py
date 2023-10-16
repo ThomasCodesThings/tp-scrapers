@@ -5,8 +5,10 @@ import multiprocessing
 import os
 import json
 import datetime
+import random
 
-DELAY = 1
+DELAY_MIN = 5
+DELAY_MAX = 10
 
 def isInvalidLink(id):
     url = f"https://bengalpedigrees.com/viewcat.php?catid={id}"
@@ -38,8 +40,8 @@ def findValidId():
             end = mid + 1  # Go to the lower half
         else:
             start = mid - 1  # Go to the upper half
-        if DELAY > 0:
-            time.sleep(DELAY)
+        DELAY = random.randint(DELAY_MIN, DELAY_MAX)
+        time.sleep(DELAY)
 
     return start
 
@@ -60,7 +62,6 @@ def loader(i, cats):
             return
         print(f"Loaded page {i} -> {'OK' if r.status_code == 200 else 'Error'} ...")
         soup = BeautifulSoup(r.text, 'html.parser')
-        table = soup.find_all('table', recursive=True)[-1]
 
         #params
         name = ''
@@ -89,10 +90,10 @@ def loader(i, cats):
         dam_td = soup.find('td', attrs={'width': '80'}, text='Dam: ')
 
         if name_td:
-            name = name_td.find_next_sibling('td').strip().replace("View Ped", "")
+            name = name_td.find_next_sibling('td').text.replace("View Ped", "").strip()
 
         if sex_td:
-            sex = name_td.find_next_sibling('td').text.strip()
+            sex = sex_td.find_next_sibling('td').text.strip()
         
         if breed_td:
             breed = breed_td.find_next_sibling('td').text.strip()
@@ -136,30 +137,36 @@ def loader(i, cats):
             'dam': dam
         })
 
-
     except Exception as e:
         print(f"Failed to fetch {url}: {str(e)}")
+
+    DELAY = random.randint(DELAY_MIN, DELAY_MAX)
+    time.sleep(DELAY)
 
 if __name__ == "__main__":
     validId = findValidId()
     print(f"Last valid id: {validId}")
     ids = list(range(1, validId + 1))
-    with multiprocessing.Manager() as patternManager:
-        print("Starting multiprocessing for urls...")
+    cats = []
+    loader(1, cats)
+    for id in ids:
+        loader(id, cats) 
+    #with multiprocessing.Manager() as patternManager:
+        #print("Starting multiprocessing for urls...")
         # Create a list to store the responses
-        cats = patternManager.list()
+        #cats = patternManager.list()
 
         # Create a pool of worker processes
-        num_processes = multiprocessing.cpu_count()
-        pool = multiprocessing.Pool(processes=num_processes)
+        #num_processes = multiprocessing.cpu_count()
+        #pool = multiprocessing.Pool(processes=num_processes)
 
         # Pass the arguments in the correct order
-        pool.starmap(loader, [(i, cats) for i in ids])
+        #pool.starmap(loader, [(i, cats) for i in ids])
 
         # Close the pool and wait for the work to finish
-        pool.close()
-        pool.join()
+        #pool.close()
+        #pool.join()
 
-        urls = list(cats)
-        print(f"Urls: {len(cats)}")
-        saveJson(urls)
+        #urls = list(cats)
+        #print(f"Urls: {len(cats)}")
+        #saveJson(urls)
