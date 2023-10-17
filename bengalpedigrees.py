@@ -41,7 +41,6 @@ def findValidId():
     
     while start >= end:
         mid = (start + end) // 2
-        print(f"Checking id: {mid}...")
         if not isInvalidLink(mid):
             end = mid + 1  # Go to the lower half
         else:
