@@ -136,7 +136,7 @@ def loader(i, cats):
         })
 
     except Exception as e:
-        print(f"Failed to fetch {url}: {str(e)}")
+        print(f"Failed to fetch: {str(e)}")
 
 if __name__ == "__main__":
     validId = findValidId()
