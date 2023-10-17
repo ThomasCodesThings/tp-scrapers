@@ -6,17 +6,23 @@ import os
 import json
 import datetime
 import random
+from utils import get_random_user_agent
 
-DELAY_MIN = 5
-DELAY_MAX = 10
+DELAY_MIN = 10
+DELAY_MAX = 20
+
+def sendRequest(id):
+    url = f"https://bengalpedigrees.com/viewcat.php?catid={id}"
+    header = {'User-Agent': get_random_user_agent()}
+    r = requests.get(url, headers=header)
+    delay = random.randint(DELAY_MIN, DELAY_MAX)
+    print(f"Checking id: {id} -> {'OK' if r.status_code == 200 else 'Error'} ...")
+    print(f"Delaying for {delay} seconds before next request...")
+    time.sleep(delay)
+    return r
 
 def isInvalidLink(id):
-    url = f"https://bengalpedigrees.com/viewcat.php?catid={id}"
-    r = requests.get(url)
-    print(f"Checking id: {id} -> {'OK' if r.status_code == 200 else 'Error'} ...")
-    if(r.status_code >= 300):
-        print(f"Failed to fetch {url}: {r.status_code}")
-        return True
+    r = sendRequest(id)
     soup = BeautifulSoup(r.text, 'html.parser')
     return isInvalid(soup)
 
@@ -40,8 +46,6 @@ def findValidId():
             end = mid + 1  # Go to the lower half
         else:
             start = mid - 1  # Go to the upper half
-        DELAY = random.randint(DELAY_MIN, DELAY_MAX)
-        time.sleep(DELAY)
 
     return start
 
@@ -55,12 +59,7 @@ def saveJson(cats):
 
 def loader(i, cats):
     try:
-        url = f"https://bengalpedigrees.com/viewcat.php?catid={i}"
-        r = requests.get(url)
-        if(r.status_code >= 300):
-            print(f"Failed to fetch {url}: {r.status_code}")
-            return
-        print(f"Loaded page {i} -> {'OK' if r.status_code == 200 else 'Error'} ...")
+        r = sendRequest(i)
         soup = BeautifulSoup(r.text, 'html.parser')
 
         #params
@@ -140,9 +139,6 @@ def loader(i, cats):
     except Exception as e:
         print(f"Failed to fetch {url}: {str(e)}")
 
-    DELAY = random.randint(DELAY_MIN, DELAY_MAX)
-    time.sleep(DELAY)
-
 if __name__ == "__main__":
     validId = findValidId()
     print(f"Last valid id: {validId}")
@@ -150,7 +146,8 @@ if __name__ == "__main__":
     cats = []
     loader(1, cats)
     for id in ids:
-        loader(id, cats) 
+        loader(id, cats)
+    saveJson(cats)
     #with multiprocessing.Manager() as patternManager:
         #print("Starting multiprocessing for urls...")
         # Create a list to store the responses
