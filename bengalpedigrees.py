@@ -8,8 +8,8 @@ import datetime
 import random
 from utils import get_random_user_agent
 
-DELAY_MIN = 5
-DELAY_MAX = 10
+DELAY_MIN = 10
+DELAY_MAX = 15
 
 def sendRequest(id):
     url = f"https://bengalpedigrees.com/viewcat.php?catid={id}"
