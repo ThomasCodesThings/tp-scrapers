@@ -8,17 +8,20 @@ import datetime
 import random
 from utils import get_random_user_agent
 
-DELAY_MIN = 10
-DELAY_MAX = 15
+DELAY_MIN = 0
+DELAY_MAX = 0
+RETRIES = 10
 
 def sendRequest(id):
     url = f"https://bengalpedigrees.com/viewcat.php?catid={id}"
     header = {'User-Agent': get_random_user_agent()}
     r = requests.get(url, headers=header)
-    delay = random.randint(DELAY_MIN, DELAY_MAX)
-    print(f"Checking id: {id} -> {'OK' if r.status_code == 200 else 'Error'} ...")
-    print(f"Delaying for {delay} seconds before next request...")
-    time.sleep(delay)
+    attempts = 0
+    while(r.status_code != 200 and attempts < RETRIES):
+        header = {'User-Agent': get_random_user_agent()}
+        r = requests.get(url, headers=header)
+        attempts += 1
+    print(f"Checking id: {id} -> {'OK' if r.status_code == 200 else f'Error: {r.status_code}'}!")
     return r
 
 def isInvalidLink(id):
@@ -60,7 +63,8 @@ def loader(i, cats):
     try:
         r = sendRequest(i)
         soup = BeautifulSoup(r.text, 'html.parser')
-
+        if isInvalid(soup):
+            return
         #params
         name = ''
         sex = ''
@@ -143,7 +147,6 @@ if __name__ == "__main__":
     print(f"Last valid id: {validId}")
     ids = list(range(1, validId + 1))
     cats = []
-    loader(1, cats)
     for id in ids:
         loader(id, cats)
     saveJson(cats)
